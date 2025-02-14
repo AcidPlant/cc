@@ -1,4 +1,5 @@
 package model;
+
 import java.math.BigDecimal;
 
 public class Employee {
@@ -7,7 +8,6 @@ public class Employee {
     private String position;
     private BigDecimal salary;
 
-    // Конструктор с параметрами
     public Employee(int id, String name, String position, BigDecimal salary) {
         this.id = id;
         this.name = name;
@@ -15,10 +15,7 @@ public class Employee {
         this.salary = salary;
     }
 
-    // Конструктор без параметров (полезен для ORM, JSON)
-    public Employee() {}
-
-    // Геттеры
+    // Getters
     public int getId() {
         return id;
     }
@@ -33,27 +30,5 @@ public class Employee {
 
     public BigDecimal getSalary() {
         return salary;
-    }
-
-    // Сеттеры
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setPosition(String position) {
-        this.position = position;
-    }
-
-    public void setSalary(BigDecimal salary) {
-        this.salary = salary;
-    }
-
-    @Override
-    public String toString() {
-        return "Employee{id=" + id + ", name='" + name + "', position='" + position + "', salary=" + salary + "}";
     }
 }

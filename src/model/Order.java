@@ -1,31 +1,43 @@
-package src.model;
+package model;
 
-import model.OrderItem;
-import model.User;
-
-import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 public class Order {
     private int id;
     private User user;
-    private List<OrderItem> items;
-    private LocalDateTime createdAt;
+    private List<OrderItem> orderItems;
+    private Date orderDate;
 
-    public Order(int id, User user, List<OrderItem> items, LocalDateTime createdAt) {
+    public Order(int id, User user) {
         this.id = id;
         this.user = user;
-        this.items = items;
-        this.createdAt = createdAt;
     }
 
-    @Override
-    public String toString() {
-        return "📦 Order{" +
-                "id=" + id +
-                ", user=" + user +
-                ", items=" + items +
-                ", createdAt=" + createdAt +
-                '}';
+    public Order(int id, User user, Date orderDate) {
+        this.id = id;
+        this.user = user;
+        this.orderDate = orderDate;
+    }
+
+    // Getters and setters
+    public int getId() {
+        return id;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public List<OrderItem> getOrderItems() {
+        return orderItems;
+    }
+
+    public void setOrderItems(List<OrderItem> orderItems) {
+        this.orderItems = orderItems;
+    }
+
+    public Date getOrderDate() {
+        return orderDate;
     }
 }

@@ -1,31 +1,35 @@
 package config;
 
-import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.sql.Statement;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
-
-
 
 public class DatabaseInitializer {
-    private static final String URL = "jdbc:postgresql://localhost:5432/postgres";
-    private static final String USER = "postgres";
-    private static final String PASSWORD = "123";
-
     public static void initializeDatabase() {
-        try (Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
              Statement statement = connection.createStatement()) {
 
-            String sql = new String(Files.readAllBytes(Paths.get("src/main/resources/schema.sql")));
-            statement.execute(sql);
+            // Load schema.sql from resources
+            InputStream inputStream = DatabaseInitializer.class.getClassLoader().getResourceAsStream("schema.sql");
+            if (inputStream == null) {
+                System.err.println("❌ schema.sql file not found in resources.");
+                return;
+            }
 
-            System.out.println("✅ База данных загружена из `schema.sql`!");
-        } catch (SQLException | IOException e) {
-            System.err.println("❌ Ошибка при загрузке базы данных: " + e.getMessage());
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            StringBuilder schemaSql = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                schemaSql.append(line).append("\n");
+            }
+
+            // Execute the schema SQL
+            statement.execute(schemaSql.toString());
+            System.out.println("✅ Database initialized successfully.");
+        } catch (Exception e) {
+            System.err.println("❌ Error initializing database: " + e.getMessage());
         }
     }
 }

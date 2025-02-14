@@ -1,97 +1,87 @@
 package repository;
 
+import config.DatabaseConnection;
 import model.Car;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-
 
 public class CarRepository {
-    private static final String URL = "jdbc:postgresql://localhost:5432/postgres";
-    private static final String USER = "postgres";
-    private static final String PASSWORD = "123";
-
-    private Connection connect() throws SQLException {
-        return DriverManager.getConnection(URL, USER, PASSWORD);
-    }
-
     public void addCar(Car car) {
-        String sql = "INSERT INTO cars (model, category, year, price) VALUES (?, ?, ?, ?)";
+        String query = "INSERT INTO cars (model, category, price, year) VALUES (?, ?, ?, ?)";
 
-        try (Connection conn = connect();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            stmt.setString(1, car.getModel());
-            stmt.setString(2, car.getCategory());
-            stmt.setInt(3, car.getYear());
-            stmt.setDouble(4, car.getPrice());
-            stmt.executeUpdate();
-
-            ResultSet keys = stmt.getGeneratedKeys();
-            if (keys.next()) {
-                car.setId(keys.getInt(1));
-            }
-
-            System.out.println("✅ Машина успешно добавлена: " + car);
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, car.getModel());
+            statement.setString(2, car.getCategory());
+            statement.setDouble(3, car.getPrice());
+            statement.setInt(4, car.getYear());
+            statement.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("❌ Ошибка при добавлении машины: " + e.getMessage());
+            System.err.println("❌ Ошибка при добавлении автомобиля: " + e.getMessage());
         }
     }
 
     public List<Car> getAllCars() {
         List<Car> cars = new ArrayList<>();
-        String sql = "SELECT * FROM cars";
+        String query = "SELECT * FROM cars";
 
-        try (Connection conn = connect();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            while (rs.next()) {
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
                 cars.add(new Car(
-                        rs.getInt("id"),
-                        rs.getString("model"),
-                        rs.getString("category"),
-                        rs.getInt("year"),
-                        rs.getDouble("price")
+                        resultSet.getInt("id"),
+                        resultSet.getString("model"),
+                        resultSet.getString("category"),
+                        resultSet.getDouble("price"),
+                        resultSet.getInt("year")
                 ));
             }
         } catch (SQLException e) {
-            System.err.println("❌ Ошибка при получении списка машин: " + e.getMessage());
+            System.err.println("❌ Ошибка при получении списка автомобилей: " + e.getMessage());
         }
         return cars;
     }
 
-    public Optional<Car> getCarById(int id) {
-        String sql = "SELECT * FROM cars WHERE id = ?";
-        try (Connection conn = connect();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, id);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return Optional.of(new Car(
-                        rs.getInt("id"),
-                        rs.getString("model"),
-                        rs.getString("category"),
-                        rs.getInt("year"),
-                        rs.getDouble("price")
-                ));
+    public Car getCarById(int id) {
+        String query = "SELECT * FROM cars WHERE id = ?";
+
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, id);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                return new Car(
+                        resultSet.getInt("id"),
+                        resultSet.getString("model"),
+                        resultSet.getString("category"),
+                        resultSet.getDouble("price"),
+                        resultSet.getInt("year")
+                );
             }
         } catch (SQLException e) {
-            System.err.println("❌ Ошибка при поиске машины: " + e.getMessage());
+            System.err.println("❌ Ошибка при получении автомобиля: " + e.getMessage());
         }
-        return Optional.empty();
+        return null;
     }
 
-    public boolean deleteCar(int id) {
-        String sql = "DELETE FROM cars WHERE id = ?";
-        try (Connection conn = connect();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, id);
-            int rowsAffected = stmt.executeUpdate();
-            return rowsAffected > 0;
+    public void deleteCar(int id) {
+        String query = "DELETE FROM cars WHERE id = ?";
+
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, id);
+            statement.executeUpdate();
+            System.out.println("✅ Автомобиль успешно удален.");
         } catch (SQLException e) {
-            System.err.println("❌ Ошибка при удалении машины: " + e.getMessage());
-            return false;
+            System.err.println("❌ Ошибка при удалении автомобиля: " + e.getMessage());
         }
     }
 }
