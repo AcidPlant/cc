@@ -1,6 +1,7 @@
 package service;
 
 import model.Order;
+import model.OrderItem;
 import repository.OrderRepository;
 
 import java.util.List;
@@ -14,5 +15,9 @@ public class OrderService {
 
     public List<Order> getOrdersByUserId(int userId) {
         return orderRepository.getOrdersByUserId(userId);
+    }
+
+    public boolean createOrder(int userId, List<OrderItem> orderItems) {
+        return orderRepository.createOrder(userId, orderItems);
     }
 }

@@ -3,11 +3,14 @@ import Controllers.CarController;
 import Controllers.EmployeeController;
 import Controllers.MachineController;
 import Controllers.OrderController;
+import model.OrderItem;
 import model.User;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 import config.DatabaseConnection;
@@ -23,23 +26,23 @@ public class Main {
     private static User currentUser = null;
 
     public static void main(String[] args) {
-        // Initialize the database
+        // Инициализация базы данных
         DatabaseInitializer.initializeDatabase();
 
-        // Check if the database connection is active
+        // Проверка соединения с базой данных
         try (Connection connection = DatabaseConnection.getInstance().getConnection()) {
             if (connection != null && !connection.isClosed()) {
-                System.out.println("✅ Database connection is active.");
+                System.out.println("✅ Соединение с базой данных установлено.");
             } else {
-                System.out.println("❌ Failed to establish database connection.");
+                System.out.println("❌ Не удалось установить соединение с базой данных.");
                 return;
             }
         } catch (SQLException e) {
-            System.err.println("❌ Database connection error: " + e.getMessage());
+            System.err.println("❌ Ошибка соединения с базой данных: " + e.getMessage());
             return;
         }
 
-        // Main application loop
+        // Основной цикл приложения
         while (true) {
             if (currentUser == null) {
                 System.out.println("\n🚗 Добро пожаловать в Car Factory!");
@@ -149,6 +152,7 @@ public class Main {
             System.out.println("\n👤 Пользователь:");
             System.out.println("1️⃣ - Просмотр автомобилей");
             System.out.println("2️⃣ - Просмотр истории заказов");
+            System.out.println("3️⃣ - Заказать автомобиль");
             System.out.println("0️⃣ - Выход");
             System.out.print("Выберите действие: ");
 
@@ -165,12 +169,53 @@ public class Main {
                     scanner.nextLine();
                     orderController.viewOrderHistory(userId);
                     break;
+                case 3:
+                    orderCar();
+                    break;
                 case 0:
                     currentUser = null;
                     return;
                 default:
                     System.out.println("❌ Некорректный ввод.");
             }
+        }
+    }
+
+    private static void orderCar() {
+        List<OrderItem> orderItems = new ArrayList<>();
+        while (true) {
+            System.out.print("Введите ID автомобиля (или 0 для завершения): ");
+            int carId = scanner.nextInt();
+            scanner.nextLine();  // Очистка буфера
+
+            if (carId == 0) {
+                break;
+            }
+
+            System.out.print("Введите количество: ");
+            int quantity = scanner.nextInt();
+            scanner.nextLine();  // Очистка буфера
+
+            System.out.print("Введите цену за единицу: ");
+            double price = scanner.nextDouble();
+            scanner.nextLine();  // Очистка буфера
+
+            orderItems.add(new OrderItem(carId, quantity, price));
+        }
+
+        if (!orderItems.isEmpty()) {
+            System.out.print("Введите ваш ID пользователя: ");
+            int userId = scanner.nextInt();
+            scanner.nextLine();  // Очистка буфера
+
+            boolean success = orderController.createOrder(userId, orderItems);
+            if (success) {
+                System.out.println("✅ Заказ успешно создан.");
+            } else {
+                System.out.println("❌ Ошибка при создании заказа.");
+            }
+        } else {
+            System.out.println("❌ Нет автомобилей для заказа.");
         }
     }
 
@@ -232,7 +277,7 @@ public class Main {
 
         System.out.print("Введите год выпуска: ");
         int year = scanner.nextInt();
-        scanner.nextLine(); // Clear buffer
+        scanner.nextLine(); // Очистка буфера
         if (year < 1900 || year > java.time.Year.now().getValue()) {
             System.out.println("❌ Некорректный год выпуска.");
             return;
@@ -302,14 +347,17 @@ public class Main {
         }
 
         System.out.print("Введите зарплату: ");
-        BigDecimal salary = scanner.nextBigDecimal();
-        scanner.nextLine(); // Clear buffer
-        if (salary.compareTo(BigDecimal.ZERO) <= 0) {
+        double salary = scanner.nextDouble();
+        scanner.nextLine(); // Очистка буфера
+        if (salary <= 0) {
             System.out.println("❌ Зарплата должна быть положительным числом.");
             return;
         }
 
-        employeeController.addEmployee(name, position, salary);
+        // Преобразуем double в BigDecimal
+        BigDecimal salaryBigDecimal = BigDecimal.valueOf(salary);
+
+        employeeController.addEmployee(name, position, salaryBigDecimal);
         System.out.println("✅ Сотрудник успешно добавлен.");
     }
 

@@ -5,10 +5,7 @@ import model.Order;
 import model.OrderItem;
 import model.User;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,7 +38,7 @@ public class OrderRepository {
                 ));
             }
             if (order != null) {
-                order.setOrderItems(orderItems);
+                order.setOrderItems(orderItems); // Убедитесь, что orderItems устанавливается
             }
             return order;
         } catch (SQLException e) {
@@ -49,7 +46,6 @@ public class OrderRepository {
         }
         return null;
     }
-
     public List<Order> getOrdersByUserId(int userId) {
         List<Order> orders = new ArrayList<>();
         String query = "SELECT id, user_id, order_date FROM orders WHERE user_id = ?";
@@ -70,5 +66,54 @@ public class OrderRepository {
             System.err.println("❌ Ошибка при получении истории заказов: " + e.getMessage());
         }
         return orders;
+    }
+
+
+    public boolean createOrder(int userId, List<OrderItem> orderItems) {
+        String orderQuery = "INSERT INTO orders (user_id, order_date) VALUES (?, ?)";
+        String orderItemQuery = "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)";
+
+        try (Connection connection = DatabaseConnection.getInstance().getConnection()) {
+            connection.setAutoCommit(false); // Начало транзакции
+
+            try (PreparedStatement orderStatement = connection.prepareStatement(orderQuery, Statement.RETURN_GENERATED_KEYS);
+                 PreparedStatement orderItemStatement = connection.prepareStatement(orderItemQuery)) {
+
+                // Вставка заказа
+                orderStatement.setInt(1, userId);
+                orderStatement.setDate(2, new java.sql.Date(System.currentTimeMillis()));
+                orderStatement.executeUpdate();
+
+                // Получение ID созданного заказа
+                int orderId;
+                try (ResultSet generatedKeys = orderStatement.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        orderId = generatedKeys.getInt(1);
+                    } else {
+                        throw new SQLException("❌ Ошибка при создании заказа: не удалось получить ID.");
+                    }
+                }
+
+                // Вставка элементов заказа
+                for (OrderItem item : orderItems) {
+                    orderItemStatement.setInt(1, orderId);
+                    orderItemStatement.setInt(2, item.getProductId());
+                    orderItemStatement.setInt(3, item.getQuantity());
+                    orderItemStatement.setDouble(4, item.getPrice());
+                    orderItemStatement.addBatch();
+                }
+                orderItemStatement.executeBatch();
+
+                connection.commit(); // Завершение транзакции
+                return true;
+            } catch (SQLException e) {
+                connection.rollback(); // Откат транзакции в случае ошибки
+                System.err.println("❌ Ошибка при создании заказа: " + e.getMessage());
+                return false;
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Ошибка при создании заказа: " + e.getMessage());
+            return false;
+        }
     }
 }

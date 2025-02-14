@@ -1,12 +1,13 @@
 package model;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 public class Order {
     private int id;
     private User user;
-    private List<OrderItem> orderItems;
+    private List<OrderItem> orderItems = new ArrayList<>(); // Инициализация списка
     private Date orderDate;
 
     public Order(int id, User user) {
@@ -20,7 +21,7 @@ public class Order {
         this.orderDate = orderDate;
     }
 
-    // Getters and setters
+    // Геттеры и сеттеры
     public int getId() {
         return id;
     }
