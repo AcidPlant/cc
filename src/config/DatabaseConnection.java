@@ -14,6 +14,7 @@ public class DatabaseConnection {
             String username = "postgres"; // Replace with your PostgreSQL username
             String password = "123"; // Replace with your PostgreSQL password
             connection = DriverManager.getConnection(url, username, password);
+            System.out.println("✅ Database connection established.");
         } catch (SQLException e) {
             System.err.println("❌ Database connection error: " + e.getMessage());
         }

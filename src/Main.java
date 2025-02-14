@@ -23,17 +23,23 @@ public class Main {
     private static User currentUser = null;
 
     public static void main(String[] args) {
+        // Initialize the database
+        DatabaseInitializer.initializeDatabase();
+
+        // Check if the database connection is active
         try (Connection connection = DatabaseConnection.getInstance().getConnection()) {
-            if (connection != null) {
+            if (connection != null && !connection.isClosed()) {
                 System.out.println("✅ Database connection is active.");
             } else {
                 System.out.println("❌ Failed to establish database connection.");
+                return;
             }
         } catch (SQLException e) {
             System.err.println("❌ Database connection error: " + e.getMessage());
+            return;
         }
-        DatabaseInitializer.initializeDatabase();
 
+        // Main application loop
         while (true) {
             if (currentUser == null) {
                 System.out.println("\n🚗 Добро пожаловать в Car Factory!");

@@ -8,11 +8,15 @@ import java.sql.Statement;
 
 public class DatabaseInitializer {
     public static void initializeDatabase() {
-        try (Connection connection = DatabaseConnection.getInstance().getConnection();
-             Statement statement = connection.createStatement()) {
+        Connection connection = DatabaseConnection.getInstance().getConnection();
+        if (connection == null) {
+            System.err.println("❌ Database connection is not available.");
+            return;
+        }
 
+        try (Statement statement = connection.createStatement()) {
             // Load schema.sql from resources
-            InputStream inputStream = DatabaseInitializer.class.getClassLoader().getResourceAsStream("schema.sql");
+            InputStream inputStream = DatabaseInitializer.class.getClassLoader().getResourceAsStream("resources/schema.sql");
             if (inputStream == null) {
                 System.err.println("❌ schema.sql file not found in resources.");
                 return;
