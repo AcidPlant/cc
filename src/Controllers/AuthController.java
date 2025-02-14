@@ -1,8 +1,12 @@
 package Controllers;
 
+import config.DatabaseConnection;
 import model.User;
 import service.UserService;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.List;
 
 public class AuthController {
@@ -28,30 +32,37 @@ public class AuthController {
         return user;
     }
 
-    public boolean register(String username, String password, String role) {
-        if (username == null || username.length() < 3 || !username.matches("[a-zA-Z0-9]+")) {
-            System.out.println("❌ Имя пользователя должно содержать не менее 3 символов и состоять только из букв и цифр.");
-            return false;
-        }
-
-        if (password == null || password.length() < 8 || !password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$")) {
-            System.out.println("❌ Пароль должен содержать не менее 8 символов, включая хотя бы одну заглавную букву, одну строчную букву и одну цифру.");
-            return false;
+    public void register(String username, String password, String role) {
+        if (username == null || username.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            System.err.println("❌ Имя пользователя и пароль не могут быть пустыми.");
+            return;
         }
 
         if (!"ADMIN".equals(role) && !"CUSTOMER".equals(role)) {
-            System.out.println("❌ Некорректная роль. Допустимые значения: ADMIN, CUSTOMER.");
-            return false;
+            System.err.println("❌ Некорректная роль. Допустимые значения: ADMIN, CUSTOMER.");
+            return;
         }
 
-        boolean success = userService.register(username, password, role);
-        if (success) {
-            System.out.println("✅ Регистрация выполнена успешно.");
-        } else {
-            System.out.println("❌ Пользователь с таким именем уже существует.");
+        try (Connection connection = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(
+                     "INSERT INTO users (username, password, role) VALUES (?, ?, ?)")) {
+
+            statement.setString(1, username);
+            statement.setString(2, password); // В реальном приложении пароль должен быть хэширован
+            statement.setString(3, role);
+
+            int rowsInserted = statement.executeUpdate();
+            if (rowsInserted > 0) {
+                System.out.println("✅ Пользователь успешно зарегистрирован.");
+            } else {
+                System.err.println("❌ Ошибка при регистрации пользователя.");
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Ошибка при регистрации: " + e.getMessage());
         }
-        return success;
     }
+
+
 
     public boolean deleteUser(String username) {
         if (username == null || username.trim().isEmpty()) {

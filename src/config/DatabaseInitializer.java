@@ -4,11 +4,17 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Statement;
 
 public class DatabaseInitializer {
     public static void initializeDatabase() {
-        Connection connection = DatabaseConnection.getInstance().getConnection();
+        Connection connection = null;
+        try {
+            connection = DatabaseConnection.getInstance().getConnection();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         if (connection == null) {
             System.err.println("❌ Database connection is not available.");
             return;
